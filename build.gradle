@@ -10,6 +10,12 @@ repositories {
 }
 
 dependencies {
+    // Source: https://mvnrepository.com/artifact/org.projectlombok/lombok
+    implementation group: 'org.projectlombok', name: 'lombok', version: '1.18.46'
+
+    // Source: https://mvnrepository.com/artifact/com.mysql/mysql-connector-j
+    implementation group: 'com.mysql', name: 'mysql-connector-j', version: '8.4.0'
+
     testImplementation platform('org.junit:junit-bom:6.0.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
