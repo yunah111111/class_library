@@ -1,4 +1,4 @@
-package org.example.util;
+package org.example.z_study.util;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -6,7 +6,7 @@ import java.sql.SQLException;
 
 public class DatabaseUtil {
 
-    private static final String URL = "jdbc:mysql://localhost:3306/library?serverTimezone=Asia/Seoul";
+    private static final String URL = "jdbc:mysql://localhost:3306/library?serverTimeZone=Asia/Seoul";
     private static final String DB_USER = System.getenv("DB_USER");
     private static final String DB_PASSWORD = System.getenv("DB_PASSWORD");
 

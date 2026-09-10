@@ -1,4 +1,4 @@
-package org.example.dto;
+package org.example.z_study.dto;
 
 import lombok.*;
 
@@ -7,7 +7,7 @@ import lombok.*;
 @Getter
 @Setter
 @ToString
-@Builder
+
 public class Book {
 
     private int id;
