@@ -53,7 +53,7 @@ public class StudentDAO {
         // 4. 쿼리 실행 결과집합 받기
 
         String sql = """
-                SELECT * FROM studnets ORDER BY id;
+                SELECT * FROM students ORDER BY id;
                 """;
         // id를 기준으로 오름차순 정렬
 

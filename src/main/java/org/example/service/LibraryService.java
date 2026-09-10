@@ -1,263 +1,106 @@
-package com.tenco.view;
+package org.example.service;
 
-import com.tenco.dto.Book;
-import com.tenco.dto.Borrow;
-import com.tenco.dto.Student;
-import com.tenco.service.LibraryService;
+// 비즈니스 로직을 처리하는 클래스
+
+import org.example.dao.BookDAO;
+import org.example.dao.BorrowDAO;
+import org.example.dao.StudentDAO;
+import org.example.dto.Book;
+import org.example.dto.Borrow;
+import org.example.dto.Student;
 
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Scanner;
 
-// 사용자의 입출력을 처리하는 View 클래스
+// [호출흐름]
+// View (사용자의 입력) -> Service (규칙 검사) -> DAO (SQL 실행) -> DB (요청과 응답)
+public class LibraryService {
 
-// [역할]
-// 키보드 입력을 받아 Service 에 넘기고, 결과를 화면에 출력한다.
-// SQL 을 직접 실행하지 않고, 업무 규칙토 판단하지 않습니다.
-//  "빈 값인가", "숫자인가" 같은 입력 형식을 검사하고 서비스단에 맞는 객체내 값을 구해서 일을 위임한다.
-public class LibraryView {
+    // (인터페이스 먼저 설계) - 이 단원에서는 생략 X (경험 부족)
+    // service 하나가 DAO 세 개를 소유할 수 있다.
+    private final BookDAO bookDAO = new BookDAO();
+    private final StudentDAO studentDAO = new StudentDAO();
+    private final BorrowDAO borrowDAO = new BorrowDAO();
 
-    private final LibraryService service = new LibraryService();
-    private final Scanner scanner = new Scanner(System.in);
-
-    // 현재 로그인한 학생 정보가 null 아니라면 로그인된 상태로 보면 된다.
-    // 만약 null 이라면 로그인이 필요한 기능에서 로그인 요청을 먼저 유도 해야 한다.
-    private Integer currentStudentId = null;
-    private String currentStudentName = null;
-    private Student currentStudent = null;
-
-    // 프로그램 메인 루프
-    // [처리순서]
-    // 1. 메뉴를 출력한다.
-    // 2. 번호를 입력 받는다
-    // 3. 번호에 맞는 메서드를 호출한다
-    // 4. 호출 중 SQLException 이 나면 에러 메세지를 출력하고 다시 1번으로 돌아간다.
-    // 5. 0번을 입력하면 프로그램 종료 또는 return 루프를 빠져 나간다.
-    // 프로그램 메인 루프
-    public void start() {
-        System.out.println("=== 도서관리 시스템 시작 ===");
-
-        while (true) {
-            printMenu();
-            int choice = readInt("선택: ");
-
-            try {
-                switch (choice) {
-                    case 1:  addBook();            break;
-                    case 2:  listBooks();           break;
-                    case 3:  searchBooks();         break;
-                    case 4:  addStudent();          break;
-                    case 5:  listStudents();        break;
-                    case 6:  borrowBook();          break;
-                    case 7:  listBorrowedBooks();   break;
-                    case 8:  returnBook();          break;
-                    case 9:  login();               break;
-                    case 10: logout();              break;
-                    case 11:
-                        System.out.println("프로그램을 종료합니다.");
-                        scanner.close();
-                        return;
-                    default:
-                        System.out.println("1~11 사이의 숫자를 입력하세요.");
-                }
-            } catch (SQLException e) {
-                // DB 오류는 사용자에게 친절하게 표시
-                System.out.println("오류: " + e.getMessage());
-            }
+    // 도서 추가
+    // 1. 제목과 저자가 비어 있는지 확인 (둘 중 하나라도 없으면 중단)
+    // 2. 통과하면 DAO에 INSERT 처리를 위임한다.
+    public void addBook(Book book) throws SQLException {
+        if (book.getTitle() == null || book.getTitle().trim().isEmpty() ||
+        book.getAuthor() == null || book.getAuthor().trim().isEmpty()) {
+            throw new SQLException("도서 제목과 저자는 필수 입력 항목입니다.");
         }
+        // 위임 처리
+        bookDAO.addBook(book);
     }
 
-    private void printMenu() {
-        System.out.println("\n=== 도서관리 시스템 ===");
-        if (currentStudentId == null) {
-            System.out.println("[ 로그아웃 상태 ]");
-        } else {
-            System.out.println("[ 로그인: " + currentStudentName + " ]");
-        }
-        System.out.println("──────────────────────");
-        System.out.println("1.  도서 추가");
-        System.out.println("2.  도서 목록");
-        System.out.println("3.  도서 검색");
-        System.out.println("4.  학생 등록");
-        System.out.println("5.  학생 목록");
-        System.out.println("6.  도서 대출");
-        System.out.println("7.  대출 중인 도서");
-        System.out.println("8.  도서 반납");
-        System.out.println("9.  로그인");
-        System.out.println("10. 로그아웃");
-        System.out.println("11. 종료");
+    // 2. 전체 도서 조회
+    // 검사할 규칙이 없으므로 DAO 결과를 그대로 넘긴다.
+    public List<Book> getAllBooks() throws SQLException {
+        return bookDAO.getAllBooks();
     }
 
-    private void addBook() throws SQLException {
-        System.out.print("제목    : ");
-        String title = scanner.nextLine().trim();
-        if (title.isEmpty()) { System.out.println("제목은 필수입니다."); return; }
-
-        System.out.print("저자    : ");
-        String author = scanner.nextLine().trim();
-        if (author.isEmpty()) { System.out.println("저자는 필수입니다."); return; }
-
-        System.out.print("출판사  : ");
-        String publisher = scanner.nextLine().trim();
-
-        int year = readInt("출판년도: ");
-        if (year < 1 || year > java.time.LocalDate.now().getYear()) {
-            System.out.println("유효한 출판년도를 입력하세요.");
-            return;
+    // 3. 도서 제목 검색
+    // 3 - 1. 검색어가 비어있는지 확인
+    // 3- 2. 통과하면 LIKE 검색을 DAO에 위임한다.
+    public List<Book> searchBooksByTitle(String title) throws SQLException {
+        if (title == null || title.trim().isEmpty()) {
+            throw new SQLException("검색어를 입력해주세요");
         }
-
-        System.out.print("ISBN    : ");
-        String isbn = scanner.nextLine().trim();
-
-        Book book = Book.builder()
-                .title(title)
-                .author(author)
-                .publisher(publisher.isEmpty() ? null : publisher)
-                .publicationYear(year)
-                .isbn(isbn.isEmpty() ? null : isbn)
-                .available(true)
-                .build();
-        service.addBook(book);
-        System.out.println("'" + title + "' 도서가 추가되었습니다.");
+        return bookDAO.searchBooksByTitle(title);
     }
 
-    private void listBooks() throws SQLException {
-        List<Book> books = service.getAllBooks();
-        System.out.println("\n=== 도서 목록 ===");
-        if (books.isEmpty()) {
-            System.out.println("등록된 도서가 없습니다.");
-        } else {
-            System.out.println("─────────────────────────────────────────────────────");
-            for (Book b : books) {
-                System.out.printf("ID: %2d | %-30s | %-15s | %s%n",
-                        b.getId(),
-                        b.getTitle(),
-                        b.getAuthor(),
-                        b.isAvailable() ? "대출 가능" : "대출 중");
-            }
+    // 4. 학생 등록
+    // 4 - 1. 이름과 학번이 비어 있는지 검사
+    // 4 - 2. 통과하면 DAO에 INSERT 처리를 위임함
+    // * 유니크 걸려있는 student_id는 DB에서 확인해야함 --> 여기서는 먼저 중복 검사를 안 할 예정
+    public void addStudent(Student student) throws SQLException {
+        if (student.getName() == null || student.getName().trim().isEmpty() ||
+        student.getStudentId() == null || student.getStudentId().trim().isEmpty()) {
+            throw new SQLException("이름과 학번은 필수 입력 항목입니다.");
         }
+        studentDAO.addStudent(student);
     }
 
-    private void searchBooks() throws SQLException {
-        System.out.print("검색 제목: ");
-        String title = scanner.nextLine().trim();
-        if (title.isEmpty()) { System.out.println("검색어를 입력해주세요."); return; }
-
-        List<Book> books = service.searchBooksByTitle(title);
-        System.out.println("\n=== 검색 결과 ===");
-        if (books.isEmpty()) {
-            System.out.println("검색 결과가 없습니다.");
-        } else {
-            for (Book b : books) {
-                System.out.printf("ID: %2d | %-30s | %-15s | %s%n",
-                        b.getId(), b.getTitle(), b.getAuthor(),
-                        b.isAvailable() ? "대출 가능" : "대출 중");
-            }
-        }
+    // 전체 학생 조회
+    public List<Student> getAllStudents() {
+        return studentDAO.getAllStudent();
     }
 
-    private void addStudent() throws SQLException {
-        System.out.print("이름: ");
-        String name = scanner.nextLine().trim();
-        if (name.isEmpty()) { System.out.println("이름은 필수입니다."); return; }
-
-        System.out.print("학번: ");
-        String studentId = scanner.nextLine().trim();
-        if (studentId.isEmpty()) { System.out.println("학번은 필수입니다."); return; }
-
-        service.addStudent(Student.builder().name(name).studentId(studentId).build());
-        System.out.println(name + " 학생이 등록되었습니다.");
+    // 로그인 (학번으로 학생 찾기)
+    // 1. 학번이 비어있는지 검사
+    // 2. DAO에서 해당 학번을 찾는다.
+    // 3. 찾으면 Student를, 없으면 null을 그대로 View에 돌려준다.
+    // 여기 코드에서는 비밀번호 없이 학번만 맞으면 로그인되는 것으로 단순화 처리
+    public Student getStudentByStudentId(String studentId) throws SQLException {
+        if (studentId == null || studentId.trim().isEmpty()) {
+            throw new SQLException("학번을 입력해주세요");
+        }
+        return studentDAO.getStudentByStudentId(studentId);
     }
 
-    private void listStudents() throws SQLException {
-        List<Student> students = service.getAllStudents();
-        System.out.println("\n=== 학생 목록 ===");
-        if (students.isEmpty()) {
-            System.out.println("등록된 학생이 없습니다.");
-        } else {
-            for (Student s : students) {
-                System.out.printf("ID: %2d | %-10s | 학번: %s%n",
-                        s.getId(), s.getName(), s.getStudentId());
-            }
+    // 도서 대출
+    // 1. 도서 ID와 학생 ID가 1 이상인지 검사 (AUTO_INCREMENT는 1부터 시작)
+    // 2. 통과하면 DAO의 트랜잭션 메서드에 위임한다.
+    // 3. 사실 뷰 단에서 먼저 로그인 여부를 확인하고 수행할 수 있도록 처리가 된다.
+    public void borrowBook(int bookId, int studentId) throws SQLException {
+        if (bookId <= 0 || studentId <= 0) {
+            throw new SQLException("유효한 도서 ID와 유효한 학생 ID를 입력해주세요");
         }
+        borrowDAO.borrowBook(bookId, studentId);
     }
 
-    private void borrowBook() throws SQLException {
-        if (currentStudentId == null) {
-            System.out.println("먼저 로그인해주세요. (메뉴 9번)");
-            return;
-        }
-        int bookId = readInt("대출할 도서 ID: ");
-        if (bookId <= 0) { System.out.println("유효한 도서 ID 를 입력하세요."); return; }
-
-        service.borrowBook(bookId, currentStudentId);
-        System.out.println("대출이 완료되었습니다.");
+    // 대출 중인 도서 조회
+    public List<Borrow> getBorrowedBooks() {
+        return borrowDAO.getBorrowedBooks();
     }
 
-    private void listBorrowedBooks() throws SQLException {
-        List<Borrow> borrows = service.getBorrowedBooks();
-        System.out.println("\n=== 대출 중인 도서 ===");
-        if (borrows.isEmpty()) {
-            System.out.println("현재 대출 중인 도서가 없습니다.");
-        } else {
-            for (Borrow borrow : borrows) {
-                System.out.printf("대출ID: %2d | 도서ID: %2d | 학생ID: %2d | 대출일: %s%n",
-                        borrow.getId(), borrow.getBookId(),
-                        borrow.getStudentId(), borrow.getBorrowDate());
-            }
+    // 도서 반납 기능
+    public void returnBook(int bookId, int studentId) throws SQLException {
+        if (bookId <= 0 || studentId <= 0) {
+            throw new SQLException("유효한 도서 ID와 유효한 학생 ID를 입력해주세요");
         }
+        borrowDAO.returnBook(bookId, studentId);
     }
 
-    private void returnBook() throws SQLException {
-        if (currentStudentId == null) {
-            System.out.println("먼저 로그인해주세요. (메뉴 9번)");
-            return;
-        }
-        int bookId = readInt("반납할 도서 ID: ");
-        if (bookId <= 0) { System.out.println("유효한 도서 ID 를 입력하세요."); return; }
-
-        service.returnBook(bookId, currentStudentId);
-        System.out.println("반납이 완료되었습니다.");
-    }
-
-    private void login() throws SQLException {
-        if (currentStudentId != null) {
-            System.out.println("이미 로그인 중입니다. (" + currentStudentName + ")");
-            return;
-        }
-        System.out.print("학번: ");
-        String studentId = scanner.nextLine().trim();
-        if (studentId.isEmpty()) { System.out.println("학번을 입력해주세요."); return; }
-
-        Student student = service.getStudentByStudentId(studentId);
-        if (student == null) {
-            System.out.println("존재하지 않는 학번입니다.");
-        } else {
-            currentStudentId   = student.getId();
-            currentStudentName = student.getName();
-            System.out.println(currentStudentName + " 님, 환영합니다!");
-        }
-    }
-
-    private void logout() {
-        if (currentStudentId == null) {
-            System.out.println("현재 로그인 상태가 아닙니다.");
-        } else {
-            System.out.println(currentStudentName + " 님이 로그아웃되었습니다.");
-            currentStudentId   = null;
-            currentStudentName = null;
-        }
-    }
-
-    // 숫자 입력을 안전하게 처리 (잘못된 입력 시 재요청)
-    private int readInt(String prompt) {
-        while (true) {
-            System.out.print(prompt);
-            try {
-                return Integer.parseInt(scanner.nextLine().trim());
-            } catch (NumberFormatException e) {
-                System.out.println("숫자를 입력해주세요.");
-            }
-        }
-    }
 }

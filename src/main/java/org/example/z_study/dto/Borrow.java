@@ -2,6 +2,7 @@ package org.example.z_study.dto;
 
 import lombok.*;
 
+import java.time.LocalDate;
 import java.util.Date;
 
 @AllArgsConstructor
@@ -15,7 +16,7 @@ public class Borrow {
     private int id;
     private int bookId;
     private int studentId;
-    private Date borrowDate;
-    private Date returnDate;
+    private LocalDate borrowDate;
+    private LocalDate returnDate;
 
 }

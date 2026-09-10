@@ -45,7 +45,7 @@ public class BookDAO {
         List<Book> bookList = new ArrayList<>();
 
         String sql = """
-                SELECT * FROM books WHERE title LIKE = ?
+                SELECT * FROM books WHERE title LIKE ?
                 """;
 
         try (Connection conn = DatabaseUtil.getConnection()) {
@@ -54,7 +54,7 @@ public class BookDAO {
                 pstmt.setString(1, "%" + title + "%");
                 ResultSet rs = pstmt.executeQuery();
 
-                if (rs.next()) {
+                while (rs.next()) {
                     bookList.add(createBook(rs));
                 }
             }
@@ -74,7 +74,7 @@ public class BookDAO {
         // available은 default로 설정해서 빼도됨
         String sql = """
                 INSERT INTO books (title, author, publisher, publication_year, isbn)
-                VALUES (?, ?, ?, ?, ?, ?)
+                VALUES (?, ?, ?, ?, ?)
                 """;
 
         try (Connection conn = DatabaseUtil.getConnection()) {
