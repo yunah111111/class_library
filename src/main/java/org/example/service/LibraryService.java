@@ -2,9 +2,11 @@ package org.example.service;
 
 // 비즈니스 로직을 처리하는 클래스
 
+import org.example.dao.AdminDAO;
 import org.example.dao.BookDAO;
 import org.example.dao.BorrowDAO;
 import org.example.dao.StudentDAO;
+import org.example.dto.Admin;
 import org.example.dto.Book;
 import org.example.dto.Borrow;
 import org.example.dto.Student;
@@ -21,6 +23,7 @@ public class LibraryService {
     private final BookDAO bookDAO = new BookDAO();
     private final StudentDAO studentDAO = new StudentDAO();
     private final BorrowDAO borrowDAO = new BorrowDAO();
+    private final AdminDAO adminDAO = new AdminDAO();
 
     // 도서 추가
     // 1. 제목과 저자가 비어 있는지 확인 (둘 중 하나라도 없으면 중단)
@@ -101,6 +104,31 @@ public class LibraryService {
             throw new SQLException("유효한 도서 ID와 유효한 학생 ID를 입력해주세요");
         }
         borrowDAO.returnBook(bookId, studentId);
+    }
+
+    // 관리자 로그인(ID와 비밀번호를 확인하는 목적)
+    // [처리순서]
+    // 1. ID와 비밀번호가 비어 있는지 검사
+    // 2. DAO에게 해당 ID의 관리자 정보를 찾는다. (없으면 null)
+    // 3. 사용자가 입력한 비밀번호와 DB에 저장된 비밀번호를 비교한다.
+    // 4. 일치하면 비밀번호를 지운 Admin 객체를 반환, 아니면 null을 View 클래스에 돌려준다.
+    public Admin authenticateAdmin(String adminId, String password) throws SQLException {
+
+        // 1
+        if (adminId == null || adminId.trim().isEmpty() ||
+                password == null || password.trim().isEmpty()) {
+            throw new SQLException("관리자 ID와 비밀번호를 입력해주세요");
+        }
+        // 2
+        Admin admin = adminDAO.findByAdminId(adminId);
+
+        // 3
+        if (!password.equals(admin.getPassword())) {
+            return null;
+        }
+        // 4 인증이 끝난 객체에 비밀번호를 남겨 둘 이유가 없으므로 지우고 돌려줍니다.
+        admin.setPassword(null);
+        return admin;
     }
 
 }

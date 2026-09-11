@@ -2,9 +2,10 @@ package org.example.z_study.service;
 
 // service는 프로그램의 실제 업무 규칙을 처리하는 곳임
 
-import org.example.dao.BookDAO;
-import org.example.dao.BorrowDAO;
-import org.example.dao.StudentDAO;
+import org.example.z_study.dao.BorrowDAO;
+import org.example.z_study.dao.StudentDAO;
+import org.example.z_study.dao.AdminDAO;
+import org.example.z_study.dao.BookDAO;
 import org.example.z_study.dto.Book;
 
 import java.sql.SQLException;
@@ -18,6 +19,7 @@ public class LibraryService {
     private BookDAO bookDAO = new BookDAO();
     private StudentDAO studentDAO = new StudentDAO();
     private BorrowDAO borrowDAO = new BorrowDAO();
+    private AdminDAO adminDAO = new AdminDAO();
 
     // 1. 도서 추가
     // 1. 제목과 저자가 비어있는지 확인 (둘 중 하나라도 없으면 중단)
@@ -28,7 +30,8 @@ public class LibraryService {
             throw new SQLException("도서 제목과 저자는 필수 입력 항목입니다.");
         }
         // 위임처리
-        bookDAO.addBook(book);
-    }
+//        bookDAO.addBook(book);
 
+
+    }
 }

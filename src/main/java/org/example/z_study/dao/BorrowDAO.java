@@ -85,7 +85,7 @@ public class BorrowDAO {
                         throw new SQLException("존재하지 않는 도서입니다. ID: " + bookId);
                     }
                     if (!rs.getBoolean("available")) {
-                        throw new SQLException("현재 대출 중인 도서입니다. 반납 후 이용 가능합니다.")
+                        throw new SQLException("현재 대출 중인 도서입니다. 반납 후 이용 가능합니다.");
                     }
                 }
             }
